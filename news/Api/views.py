@@ -1,11 +1,10 @@
-from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework import viewsets
+from django.db.models import Q
 from .models import News
 from .serializers import NewsSerializer
-from django.db.models import Q
 
-class NewsListAPIView(generics.ListAPIView):
+class NewsViewSet(viewsets.ModelViewSet):
+    queryset = News.objects.all()
     serializer_class = NewsSerializer
 
     def get_queryset(self):
