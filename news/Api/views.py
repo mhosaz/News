@@ -1,4 +1,6 @@
 from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import News
 from .serializers import NewsSerializer
 from django.db.models import Q
@@ -14,18 +16,26 @@ class NewsListAPIView(generics.ListAPIView):
         if tag:
             queryset = queryset.filter(tags__name=tag)
 
-        # Filter by keywords (must be present)
-        include_keywords = self.request.query_params.getlist('include')
-        for kw in include_keywords:
-            queryset = queryset.filter(
-                Q(title__icontains=kw) | Q(content__icontains=kw)
-            )
+        # Handle include keywords (union logic)
+        raw_include = self.request.query_params.getlist('include')
+        include_keywords = []
+        for item in raw_include:
+            include_keywords.extend([kw.strip() for kw in item.split(',') if kw.strip()])
+        if include_keywords:
+            include_q = Q()
+            for kw in include_keywords:
+                include_q |= Q(title__icontains=kw) | Q(content__icontains=kw)
+            queryset = queryset.filter(include_q)
 
-        # Filter by keywords (must NOT be present)
-        exclude_keywords = self.request.query_params.getlist('exclude')
-        for kw in exclude_keywords:
-            queryset = queryset.exclude(
-                Q(title__icontains=kw) | Q(content__icontains=kw)
-            )
+        # Handle exclude keywords (union logic)
+        raw_exclude = self.request.query_params.getlist('exclude')
+        exclude_keywords = []
+        for item in raw_exclude:
+            exclude_keywords.extend([kw.strip() for kw in item.split(',') if kw.strip()])
+        if exclude_keywords:
+            exclude_q = Q()
+            for kw in exclude_keywords:
+                exclude_q |= Q(title__icontains=kw) | Q(content__icontains=kw)
+            queryset = queryset.exclude(exclude_q)
 
         return queryset
