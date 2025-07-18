@@ -1,6 +1,7 @@
-from rest_framework import viewsets
 from django.db.models import Q
-from .models import News
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from .models import News, Tag
 from .serializers import NewsSerializer
 
 class NewsViewSet(viewsets.ModelViewSet):
@@ -38,3 +39,11 @@ class NewsViewSet(viewsets.ModelViewSet):
             queryset = queryset.exclude(exclude_q)
 
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        # Let the serializer handle validation and creation
+        serializer = NewsSerializer(data=request.data)
+        if serializer.is_valid():
+            news_instance = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
