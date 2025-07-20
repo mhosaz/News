@@ -3,8 +3,6 @@ from rest_framework.routers import DefaultRouter
 from .views import NewsViewSet
 
 router = DefaultRouter()
-router.register('news', NewsViewSet, basename='news')
-app_name = 'api'
-urlpatterns = [
-    path('', include(router.urls)),
-]
+router.register(r'news', NewsViewSet, basename='news')
+app_name = 'Api'
+urlpatterns = router.urls
