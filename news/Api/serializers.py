@@ -18,15 +18,29 @@ class NewsSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags_data = validated_data.pop('tags', [])
-        # Create the News instance
-        news_instance = News.objects.create(**validated_data)
+        source = validated_data.get('source')
+
+        # Check if news with the same source already exists
+        # You might want to add more fields to check for uniqueness (like title, published_date, etc.)
+        news_instance, created = News.objects.get_or_create(
+            source=source,
+            defaults=validated_data
+        )
+
+        # If the news already existed, we still want to update its tags
+        if not created:
+            # Update other fields if needed
+            for attr, value in validated_data.items():
+                setattr(news_instance, attr, value)
+            news_instance.save()
 
         # Handle tag creation or retrieval by name and associate with the news instance
         tags = []
         for tag_name in tags_data:
-            tag, created = Tag.objects.get_or_create(name=tag_name)  # Create or fetch tag
+            tag, _ = Tag.objects.get_or_create(name=tag_name)
             tags.append(tag)
 
-        # Associate the tags with the news instance (many-to-many relation)
+        # Associate the tags with the news instance
         news_instance.tags.set(tags)
+
         return news_instance
