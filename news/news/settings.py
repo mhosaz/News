@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-
+from celery.schedules import crontab
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Api',
     'rest_framework',
+    'django_celery_beat',
 ]
 
 REST_FRAMEWORK = {
@@ -141,5 +142,15 @@ LOGGING = {
     'root': {
         'handlers': ['console'],
         'level': 'DEBUG',
+    },
+}
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_WORKER_POOL = 'solo'
+
+CELERY_BEAT_SCHEDULE = {
+    'run-zoomit-spider-every-5-minutes': {
+        'task': 'Api.tasks.run_zoomit_spider',  # full path to your task
+        'schedule': crontab(minute='*/5'),      # every 5 minutes
     },
 }
